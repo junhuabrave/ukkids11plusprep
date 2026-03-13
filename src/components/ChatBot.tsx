@@ -18,7 +18,25 @@ export default function ChatBot({ initialMessage, questionContext }: ChatBotProp
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [childProfile, setChildProfile] = useState<{
+    child_name: string;
+    child_age: number;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          setChildProfile({
+            child_name: data.settings.child_name || "",
+            child_age: data.settings.child_age || 10,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,6 +65,8 @@ export default function ChatBot({ initialMessage, questionContext }: ChatBotProp
         body: JSON.stringify({
           messages: newMessages,
           questionContext,
+          childName: childProfile?.child_name,
+          childAge: childProfile?.child_age,
         }),
       });
 

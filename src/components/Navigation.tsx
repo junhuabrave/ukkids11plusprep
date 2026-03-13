@@ -9,6 +9,7 @@ const navItems = [
   { href: "/mock-test", label: "Mock Test", icon: "📋" },
   { href: "/review", label: "Review Mistakes", icon: "🔄" },
   { href: "/progress", label: "Progress", icon: "📊" },
+  { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export default function Navigation() {

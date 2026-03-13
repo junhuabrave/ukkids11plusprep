@@ -44,6 +44,22 @@ export default function QuestionCard({
     onAnswer(question.id, selectedAnswer, isCorrect);
   };
 
+  const askTutorAboutQuestion = () => {
+    if (!onAskTutor) return;
+    if (answered || showResult) {
+      const wasCorrect = selectedAnswer === question.correct_answer;
+      onAskTutor(
+        wasCorrect
+          ? `I got this question right but can you explain it more? Question: "${question.question_text}" The answer is "${question.correct_answer}".`
+          : `I got this question wrong and I don't understand it. Question: "${question.question_text}" I chose "${selectedAnswer}" but the correct answer is "${question.correct_answer}". ${question.explanation} Can you help me understand step by step?`
+      );
+    } else {
+      onAskTutor(
+        `I'm stuck on this question and need help: "${question.question_text}" The choices are: ${question.options.join(", ")}. Can you give me a hint without telling me the answer?`
+      );
+    }
+  };
+
   const getOptionStyle = (option: string) => {
     if (!answered && !showResult) {
       return selectedAnswer === option
@@ -115,6 +131,7 @@ export default function QuestionCard({
         ))}
       </div>
 
+      {/* Action buttons before answering */}
       {!answered && !showResult && (
         <div className="flex gap-3">
           <button
@@ -129,7 +146,15 @@ export default function QuestionCard({
               onClick={() => setShowHint(!showHint)}
               className="py-3 px-4 border-2 border-amber-300 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors"
             >
-              {showHint ? "Hide Hint" : "💡 Hint"}
+              {showHint ? "Hide Hint" : "Hint"}
+            </button>
+          )}
+          {onAskTutor && (
+            <button
+              onClick={askTutorAboutQuestion}
+              className="py-3 px-4 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors text-sm"
+            >
+              Help me!
             </button>
           )}
         </div>
@@ -143,6 +168,7 @@ export default function QuestionCard({
         </div>
       )}
 
+      {/* Result and explanation after answering */}
       {(answered || showResult) && (
         <div
           className={`mt-4 p-4 rounded-lg ${
@@ -153,25 +179,28 @@ export default function QuestionCard({
         >
           {selectedAnswer === question.correct_answer ? (
             <p className="text-green-800 font-medium mb-2">
-              ✓ Correct! Well done!
+              Correct! Well done!
             </p>
           ) : (
             <p className="text-red-800 font-medium mb-2">
-              ✗ Not quite. The correct answer is:{" "}
+              Not quite. The correct answer is:{" "}
               <strong>{question.correct_answer}</strong>
             </p>
           )}
-          <p className="text-gray-700 text-sm">{question.explanation}</p>
+          <p className="text-gray-700 text-sm mb-3">{question.explanation}</p>
+
           {onAskTutor && (
             <button
-              onClick={() =>
-                onAskTutor(
-                  `Help me understand this question: "${question.question_text}". The correct answer is "${question.correct_answer}". ${question.explanation}`
-                )
-              }
-              className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+              onClick={askTutorAboutQuestion}
+              className={`w-full py-3 px-4 rounded-lg font-medium text-sm transition-colors ${
+                selectedAnswer === question.correct_answer
+                  ? "bg-green-100 text-green-800 hover:bg-green-200 border border-green-300"
+                  : "bg-indigo-500 text-white hover:bg-indigo-600"
+              }`}
             >
-              🤖 Ask the tutor to explain more
+              {selectedAnswer === question.correct_answer
+                ? "Tell me more about this topic"
+                : "I still don't understand - help me!"}
             </button>
           )}
         </div>
