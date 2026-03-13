@@ -125,7 +125,7 @@ export function getSessionResults(sessionId: string) {
 
   const answers = db
     .prepare(
-      `SELECT sa.*, q.question_text, q.correct_answer, q.explanation, q.options, q.subject, q.topic
+      `SELECT sa.*, q.question_text, q.correct_answer, q.explanation, q.options, q.subject, q.topic, q.difficulty
        FROM session_answers sa
        JOIN questions q ON sa.question_id = q.id
        WHERE sa.session_id = ?
@@ -140,6 +140,40 @@ export function getSessionResults(sessionId: string) {
       options: JSON.parse(a.options as string),
     })),
   };
+}
+
+export function recordUnanswered(
+  sessionId: string,
+  questionIds: string[]
+) {
+  const db = getDb();
+
+  const insertAnswer = db.prepare(
+    `INSERT INTO session_answers (session_id, question_id, user_answer, is_correct, time_spent_seconds)
+     VALUES (?, ?, ?, 0, 0)`
+  );
+
+  const insertWrong = db.prepare(
+    `INSERT INTO wrong_questions (user_id, question_id, wrong_count, last_wrong_at)
+     VALUES ((SELECT user_id FROM practice_sessions WHERE id = ?), ?, 1, datetime('now'))
+     ON CONFLICT(user_id, question_id) DO UPDATE SET
+       wrong_count = wrong_count + 1,
+       last_wrong_at = datetime('now'),
+       reviewed = 0`
+  );
+
+  const transaction = db.transaction(() => {
+    for (const qid of questionIds) {
+      insertAnswer.run(sessionId, qid, "__unanswered__");
+      insertWrong.run(sessionId, qid);
+    }
+    // Update session total_questions count for unanswered
+    db.prepare(
+      `UPDATE practice_sessions SET total_questions = total_questions + ? WHERE id = ?`
+    ).run(questionIds.length, sessionId);
+  });
+
+  transaction();
 }
 
 export function markQuestionReviewed(questionId: string, userId: string = "default") {

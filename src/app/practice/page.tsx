@@ -15,6 +15,7 @@ interface Question {
   correct_answer: string;
   explanation: string;
   hint: string | null;
+  difficulty?: number;
 }
 
 export default function PracticePage() {
@@ -27,6 +28,7 @@ export default function PracticePage() {
   const [loading, setLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState<string>("");
   const questionStartTime = useRef<number>(Date.now());
+  const answeredIds = useRef<Set<string>>(new Set());
 
   const startSession = useCallback(async () => {
     setLoading(true);
@@ -50,6 +52,7 @@ export default function PracticePage() {
       setIsComplete(false);
       setResults(null);
       questionStartTime.current = Date.now();
+      answeredIds.current = new Set();
     } catch (error) {
       console.error("Failed to start session:", error);
     }
@@ -65,6 +68,7 @@ export default function PracticePage() {
     answer: string,
     isCorrect: boolean
   ) => {
+    answeredIds.current.add(questionId);
     const timeSpent = Math.floor((Date.now() - questionStartTime.current) / 1000);
 
     await fetch("/api/sessions", {
@@ -91,11 +95,30 @@ export default function PracticePage() {
     }, 2000);
   };
 
-  const finishSession = async () => {
+  const finishSession = async (markUnanswered: boolean = false) => {
     setIsRunning(false);
     setIsComplete(true);
 
     if (!sessionId) return;
+
+    // Record unanswered questions as review items
+    if (markUnanswered && questions.length > 0) {
+      const unansweredIds = questions
+        .map((q) => q.id)
+        .filter((id) => !answeredIds.current.has(id));
+
+      if (unansweredIds.length > 0) {
+        await fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "unanswered",
+            sessionId,
+            questionIds: unansweredIds,
+          }),
+        });
+      }
+    }
 
     await fetch("/api/sessions", {
       method: "POST",
@@ -113,9 +136,9 @@ export default function PracticePage() {
   };
 
   const handleTimeUp = useCallback(() => {
-    finishSession();
+    finishSession(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, [sessionId, questions]);
 
   if (loading) {
     return (

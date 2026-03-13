@@ -14,6 +14,7 @@ interface Question {
   correct_answer: string;
   explanation: string;
   hint: string | null;
+  difficulty?: number;
 }
 
 const subjects = [

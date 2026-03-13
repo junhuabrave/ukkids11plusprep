@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   createSession,
   recordAnswer,
+  recordUnanswered,
   completeSession,
   getSessionResults,
   markQuestionReviewed,
@@ -23,6 +24,12 @@ export async function POST(request: NextRequest) {
       case "answer": {
         const { sessionId, questionId, userAnswer, isCorrect, timeSpent } = body;
         recordAnswer(sessionId, questionId, userAnswer, isCorrect, timeSpent);
+        return NextResponse.json({ success: true });
+      }
+
+      case "unanswered": {
+        const { sessionId: uSid, questionIds } = body;
+        recordUnanswered(uSid, questionIds);
         return NextResponse.json({ success: true });
       }
 

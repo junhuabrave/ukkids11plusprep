@@ -12,6 +12,7 @@ interface QuestionCardProps {
     correct_answer: string;
     explanation: string;
     hint: string | null;
+    difficulty?: number;
   };
   questionNumber: number;
   totalQuestions: number;
@@ -83,6 +84,14 @@ export default function QuestionCard({
     "Non-Verbal Reasoning": "bg-orange-100 text-orange-700",
   };
 
+  const difficultyLabel: Record<number, { text: string; style: string }> = {
+    1: { text: "Easy", style: "bg-green-100 text-green-700" },
+    2: { text: "Medium", style: "bg-amber-100 text-amber-700" },
+    3: { text: "Hard", style: "bg-red-100 text-red-700" },
+  };
+
+  const difficulty = question.difficulty ? difficultyLabel[question.difficulty] : null;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4">
@@ -95,6 +104,13 @@ export default function QuestionCard({
             {question.subject}
           </span>
           <span className="text-xs text-gray-500">{question.topic}</span>
+          {difficulty && (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${difficulty.style}`}
+            >
+              {difficulty.text}
+            </span>
+          )}
         </div>
         <span className="text-sm text-gray-500">
           {questionNumber} / {totalQuestions}
