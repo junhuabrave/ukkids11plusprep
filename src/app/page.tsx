@@ -25,13 +25,17 @@ export default function Dashboard() {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [subjects, setSubjects] = useState<SubjectStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [examLevel, setExamLevel] = useState<string>("11+");
 
   useEffect(() => {
-    fetch("/api/progress")
-      .then((res) => res.json())
-      .then((data) => {
-        setStats(data.overview);
-        setSubjects(data.subjects);
+    Promise.all([
+      fetch("/api/progress").then((res) => res.json()),
+      fetch("/api/settings").then((res) => res.json()),
+    ])
+      .then(([progressData, settingsData]) => {
+        setStats(progressData.overview);
+        setSubjects(progressData.subjects);
+        setExamLevel(settingsData.settings?.exam_level || "11+");
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -60,10 +64,12 @@ export default function Dashboard() {
       {/* Welcome section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Welcome to 11+ Practice Hub
+          Welcome to {examLevel} Practice Hub
         </h1>
         <p className="text-gray-600">
-          Your daily practice companion for GL and CEM 11+ exam preparation
+          {examLevel === "7+"
+            ? "Your daily practice companion for 7+ independent school exam preparation"
+            : "Your daily practice companion for GL and CEM 11+ exam preparation"}
         </p>
       </div>
 
@@ -176,31 +182,58 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Exam boards info */}
+      {/* Exam info */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
-          11+ Exam Coverage
+          {examLevel} Exam Coverage
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-2">GL Assessment</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Maths (arithmetic, geometry, data handling)</li>
-              <li>• English (comprehension, grammar, spelling)</li>
-              <li>• Verbal Reasoning (codes, analogies, word puzzles)</li>
-              <li>• Non-Verbal Reasoning (patterns, sequences, spatial)</li>
-            </ul>
+        {examLevel === "7+" ? (
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">What is the 7+?</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                The 7+ exam is for entry into Year 3 at independent and prep schools.
+                Children typically sit this exam at age 6–7.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Maths (counting, addition, subtraction, shapes, time)</li>
+                <li>• English (phonics, reading, grammar, vocabulary)</li>
+                <li>• Verbal Reasoning (odd one out, simple patterns)</li>
+                <li>• Non-Verbal Reasoning (sequences, matching)</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">Exam Format</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Usually 2–3 short papers</li>
+                <li>• Multiple choice and short answer</li>
+                <li>• May include a creative writing task</li>
+                <li>• Some schools also have an interview</li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-2">CEM (Durham University)</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Maths (numerical reasoning, problem solving)</li>
-              <li>• English (vocabulary, comprehension, cloze)</li>
-              <li>• Verbal Reasoning (synonyms, analogies, logic)</li>
-              <li>• Non-Verbal Reasoning (shapes, patterns, spatial)</li>
-            </ul>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">GL Assessment</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Maths (arithmetic, geometry, data handling)</li>
+                <li>• English (comprehension, grammar, spelling)</li>
+                <li>• Verbal Reasoning (codes, analogies, word puzzles)</li>
+                <li>• Non-Verbal Reasoning (patterns, sequences, spatial)</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2">CEM (Durham University)</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Maths (numerical reasoning, problem solving)</li>
+                <li>• English (vocabulary, comprehension, cloze)</li>
+                <li>• Verbal Reasoning (synonyms, analogies, logic)</li>
+                <li>• Non-Verbal Reasoning (shapes, patterns, spatial)</li>
+              </ul>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <ChatBot />

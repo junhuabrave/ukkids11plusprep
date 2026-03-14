@@ -6,6 +6,7 @@ interface Settings {
   child_name: string;
   child_age: number;
   target_exam: string;
+  exam_level: string;
   daily_goal_minutes: number;
 }
 
@@ -14,6 +15,7 @@ export default function SettingsPage() {
     child_name: "",
     child_age: 10,
     target_exam: "both",
+    exam_level: "11+",
     daily_goal_minutes: 15,
   });
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,7 @@ export default function SettingsPage() {
             child_name: data.settings.child_name || "",
             child_age: data.settings.child_age || 10,
             target_exam: data.settings.target_exam || "both",
+            exam_level: data.settings.exam_level || "11+",
             daily_goal_minutes: data.settings.daily_goal_minutes || 15,
           });
         }
@@ -101,23 +104,54 @@ export default function SettingsPage() {
             </label>
             <select
               value={settings.child_age}
-              onChange={(e) =>
-                setSettings({ ...settings, child_age: parseInt(e.target.value) })
-              }
+              onChange={(e) => {
+                const age = parseInt(e.target.value);
+                const newLevel = age <= 7 ? "7+" : "11+";
+                setSettings({ ...settings, child_age: age, exam_level: newLevel });
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              {[7, 8, 9, 10, 11, 12].map((age) => (
-                <option key={age} value={age}>
-                  {age} years old {age === 9 ? "(Year 5)" : age === 10 ? "(Year 6)" : age === 11 ? "(Year 7)" : ""}
-                </option>
-              ))}
+              {[5, 6, 7, 8, 9, 10, 11, 12].map((age) => {
+                const yearGroup: Record<number, string> = {
+                  5: "Year 1", 6: "Year 2", 7: "Year 3",
+                  8: "Year 4", 9: "Year 5", 10: "Year 6",
+                  11: "Year 7", 12: "Year 8"
+                };
+                return (
+                  <option key={age} value={age}>
+                    {age} years old ({yearGroup[age]})
+                  </option>
+                );
+              })}
             </select>
             <p className="text-xs text-gray-500 mt-1">
               The AI tutor adjusts its language and explanations based on your child&apos;s age
             </p>
           </div>
 
-          {/* Target exam */}
+          {/* Exam level */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Exam Level
+            </label>
+            <select
+              value={settings.exam_level}
+              onChange={(e) =>
+                setSettings({ ...settings, exam_level: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="7+">7+ (Year 2–3 entry to independent schools)</option>
+              <option value="11+">11+ (Year 6 entry to grammar/independent schools)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {settings.exam_level === "7+"
+                ? "7+ exams test Maths, English, and basic Reasoning for entry into Year 3"
+                : "11+ exams test Maths, English, Verbal Reasoning, and Non-Verbal Reasoning"}
+            </p>
+          </div>
+
+          {/* Target exam board */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Target Exam Board
@@ -129,9 +163,18 @@ export default function SettingsPage() {
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              <option value="both">Both GL and CEM</option>
-              <option value="gl">GL Assessment only</option>
-              <option value="cem">CEM (Durham) only</option>
+              {settings.exam_level === "7+" ? (
+                <>
+                  <option value="both">Independent School Format</option>
+                  <option value="gl">GL Assessment</option>
+                </>
+              ) : (
+                <>
+                  <option value="both">Both GL and CEM</option>
+                  <option value="gl">GL Assessment only</option>
+                  <option value="cem">CEM (Durham) only</option>
+                </>
+              )}
             </select>
           </div>
 

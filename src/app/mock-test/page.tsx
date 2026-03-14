@@ -33,14 +33,21 @@ export default function MockTestPage() {
   const [results, setResults] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState<string>("");
+  const [examLevel, setExamLevel] = useState<string>("11+");
   const questionStartTime = useRef<number>(Date.now());
 
   const startTest = useCallback(async (subject: string) => {
     setLoading(true);
     setSelectedSubject(subject);
     try {
+      // Fetch user settings to get exam level
+      const settingsRes = await fetch("/api/settings");
+      const settingsData = await settingsRes.json();
+      const level = settingsData.settings?.exam_level || "11+";
+      setExamLevel(level);
+
       const [questionsRes, sessionRes] = await Promise.all([
-        fetch(`/api/questions?subject=${encodeURIComponent(subject)}&count=10`),
+        fetch(`/api/questions?subject=${encodeURIComponent(subject)}&count=10&examLevel=${encodeURIComponent(level)}`),
         fetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

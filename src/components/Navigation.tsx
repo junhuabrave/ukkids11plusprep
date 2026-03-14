@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: "🏠" },
@@ -14,13 +15,25 @@ const navItems = [
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [examLevel, setExamLevel] = useState<string>("11+");
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings?.exam_level) {
+          setExamLevel(data.settings.exam_level);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-indigo-600">11+</span>
+            <span className="text-2xl font-bold text-indigo-600">{examLevel}</span>
             <span className="text-lg font-semibold text-gray-800">
               Practice Hub
             </span>

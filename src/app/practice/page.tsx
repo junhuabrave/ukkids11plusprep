@@ -30,11 +30,19 @@ export default function PracticePage() {
   const questionStartTime = useRef<number>(Date.now());
   const answeredIds = useRef<Set<string>>(new Set());
 
+  const [examLevel, setExamLevel] = useState<string>("11+");
+
   const startSession = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch user settings to get exam level
+      const settingsRes = await fetch("/api/settings");
+      const settingsData = await settingsRes.json();
+      const level = settingsData.settings?.exam_level || "11+";
+      setExamLevel(level);
+
       const [questionsRes, sessionRes] = await Promise.all([
-        fetch("/api/questions?type=daily"),
+        fetch(`/api/questions?type=daily&examLevel=${encodeURIComponent(level)}`),
         fetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -180,15 +188,17 @@ export default function PracticePage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Daily Practice</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          {examLevel === "7+" ? "7+" : "11+"} Daily Practice
+        </h1>
         <p className="text-gray-600">
-          15-minute session &middot; All subjects &middot; {questions.length} questions
+          {examLevel === "7+" ? "10" : "15"}-minute session &middot; All subjects &middot; {questions.length} questions
         </p>
       </div>
 
       <div className="mb-6">
         <Timer
-          durationMinutes={15}
+          durationMinutes={examLevel === "7+" ? 10 : 15}
           onTimeUp={handleTimeUp}
           isRunning={isRunning}
         />

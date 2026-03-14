@@ -7,6 +7,7 @@ export interface Question {
   topic: string;
   subtopic: string | null;
   exam_board: string;
+  exam_level: string;
   difficulty: number;
   question_text: string;
   question_type: string;
@@ -30,7 +31,8 @@ function parseQuestion(row: Record<string, unknown>): Question {
 export function getRandomQuestions(
   count: number,
   subject?: string,
-  excludeIds?: string[]
+  excludeIds?: string[],
+  examLevel?: string
 ): Question[] {
   ensureSeeded();
   const db = getDb();
@@ -42,6 +44,11 @@ export function getRandomQuestions(
   if (subject) {
     conditions.push("subject = ?");
     params.push(subject);
+  }
+
+  if (examLevel) {
+    conditions.push("(exam_level = ? OR exam_level = 'both')");
+    params.push(examLevel);
   }
 
   if (excludeIds && excludeIds.length > 0) {
@@ -62,19 +69,30 @@ export function getRandomQuestions(
   return rows.map(parseQuestion);
 }
 
-export function getDailyPracticeQuestions(): Question[] {
+export function getDailyPracticeQuestions(examLevel?: string): Question[] {
   ensureSeeded();
   const db = getDb();
 
-  const subjects = ["Maths", "English", "Verbal Reasoning", "Non-Verbal Reasoning"];
+  const subjects = examLevel === "7+"
+    ? ["Maths", "English", "Verbal Reasoning", "Non-Verbal Reasoning"]
+    : ["Maths", "English", "Verbal Reasoning", "Non-Verbal Reasoning"];
+  const questionsPerSubject = examLevel === "7+" ? 3 : 4;
   const allQuestions: Question[] = [];
 
+  const levelFilter = examLevel
+    ? "AND (exam_level = ? OR exam_level = 'both')"
+    : "";
+
   for (const subject of subjects) {
+    const params: unknown[] = [subject];
+    if (examLevel) params.push(examLevel);
+    params.push(questionsPerSubject);
+
     const rows = db
       .prepare(
-        "SELECT * FROM questions WHERE subject = ? ORDER BY RANDOM() LIMIT 4"
+        `SELECT * FROM questions WHERE subject = ? ${levelFilter} ORDER BY RANDOM() LIMIT ?`
       )
-      .all(subject) as Record<string, unknown>[];
+      .all(...params) as Record<string, unknown>[];
     allQuestions.push(...rows.map(parseQuestion));
   }
 

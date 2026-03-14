@@ -11,11 +11,18 @@ function ensureSettingsTable() {
       child_name TEXT DEFAULT '',
       child_age INTEGER DEFAULT 10,
       target_exam TEXT DEFAULT 'both',
+      exam_level TEXT DEFAULT '11+',
       daily_goal_minutes INTEGER DEFAULT 15,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+  // Migration: add exam_level column if it doesn't exist
+  try {
+    db.exec("ALTER TABLE user_settings ADD COLUMN exam_level TEXT DEFAULT '11+'");
+  } catch {
+    // Column already exists
+  }
 }
 
 export async function GET() {
@@ -51,20 +58,21 @@ export async function POST(request: NextRequest) {
     ensureSettingsTable();
     const db = getDb();
     const body = await request.json();
-    const { child_name, child_age, target_exam, daily_goal_minutes } = body;
+    const { child_name, child_age, target_exam, exam_level, daily_goal_minutes } = body;
 
     db.prepare(
-      `INSERT INTO user_settings (user_id, child_name, child_age, target_exam, daily_goal_minutes, updated_at)
-       VALUES ('default', ?, ?, ?, ?, datetime('now'))
+      `INSERT INTO user_settings (user_id, child_name, child_age, target_exam, exam_level, daily_goal_minutes, updated_at)
+       VALUES ('default', ?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT(user_id) DO UPDATE SET
          child_name = ?,
          child_age = ?,
          target_exam = ?,
+         exam_level = ?,
          daily_goal_minutes = ?,
          updated_at = datetime('now')`
     ).run(
-      child_name, child_age, target_exam, daily_goal_minutes,
-      child_name, child_age, target_exam, daily_goal_minutes
+      child_name, child_age, target_exam, exam_level || "11+", daily_goal_minutes,
+      child_name, child_age, target_exam, exam_level || "11+", daily_goal_minutes
     );
 
     const settings = db

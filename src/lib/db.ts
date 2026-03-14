@@ -28,6 +28,7 @@ function initDb(db: Database.Database) {
       topic TEXT NOT NULL,
       subtopic TEXT,
       exam_board TEXT NOT NULL DEFAULT 'both',
+      exam_level TEXT NOT NULL DEFAULT '11+',
       difficulty INTEGER NOT NULL DEFAULT 1,
       question_text TEXT NOT NULL,
       question_type TEXT NOT NULL DEFAULT 'multiple_choice',

@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type");
   const subject = searchParams.get("subject");
   const count = parseInt(searchParams.get("count") || "10");
+  const examLevel = searchParams.get("examLevel") || undefined;
 
   try {
     if (type === "daily") {
-      const questions = getDailyPracticeQuestions();
+      const questions = getDailyPracticeQuestions(examLevel);
       return NextResponse.json({ questions });
     }
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ topics });
     }
 
-    const questions = getRandomQuestions(count, subject || undefined);
+    const questions = getRandomQuestions(count, subject || undefined, undefined, examLevel);
     return NextResponse.json({ questions });
   } catch (error) {
     console.error("Error fetching questions:", error);
